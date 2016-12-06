@@ -38,9 +38,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD
     #'trackapp',
     'trackapp.apps.TrackappConfig',
 
+||||||| merged common ancestors
+=======
+    'rest_framework',
+    'trackapp.apps.TrackappConfig',
+>>>>>>> c7b03c2e55db2d59f2f7a9cf491e26ced1caf330
 ]
 
 MIDDLEWARE = [
@@ -76,7 +82,6 @@ WSGI_APPLICATION = 'trackmates.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -88,6 +93,7 @@ DATABASES = {
         'autocommit': True,
     }
 }
+
 
 
 # Password validation
