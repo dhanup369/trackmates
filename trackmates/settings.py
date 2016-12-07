@@ -38,16 +38,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
     #'trackapp',
-    'trackapp.apps.TrackappConfig',
-
-||||||| merged common ancestors
-=======
     'rest_framework',
     'trackapp.apps.TrackappConfig',
->>>>>>> c7b03c2e55db2d59f2f7a9cf491e26ced1caf330
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    )
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

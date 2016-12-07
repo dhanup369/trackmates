@@ -1,21 +1,13 @@
 
-<<<<<<< HEAD
-from django.shortcuts import render, get_object_or_404
-
-#from trackapp.models import Blog
-
-# this function for home page
-def home(request):
-    return render(request,'trackapp/home.html',{})
-||||||| merged common ancestors
-# Create your views here.
-=======
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, HttpResponse
 
 
 #import SignUp modele here
 from trackapp.models import SignUp
 
+
+from trackapp.forms import SignUpForm
+from trackapp.forms import LoginForm
 #import serializers model here
 from trackapp.serializers import SignUpSerializer
 
@@ -28,6 +20,10 @@ from rest_framework import status
 #import other module
 from datetime import datetime,timedelta
 from django.utils import timezone
+
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
+
 
 
 #  class based views for SignUp model model--------------------------------------------
@@ -81,8 +77,53 @@ class SignUpDetail(APIView):
 
 #----------------------end --------------------------------------------------------------
 
+#this method render /trackapp/home.html page
 
-# this function for home page
+def signup(request):
+    signupData=SignUpForm(request.POST)
+    context={
+        "signupData":signupData
+    }
+    print("sdkfksdfknfksfksfnsknfkjs")
+    if request.method == 'POST':
+        if signupData.is_valid():
+            instance = signupData.save(commit=False)
+            instance.save()
+        print(signupData)
+        return render(request,'trackapp/signup.html')
+    else:
+        print("page re gggggggggggg")
+        return render(request,'trackapp/signup.html',context)
+
+def login(request):
+    loginData=LoginForm(request.POST)
+    print("jai hind")
+    context = {
+        "loginData": loginData,
+    }
+    if request.method == 'POST':
+        useremail = request.POST.get('useremail', '')
+        password = request.POST.get('password', '')
+        print("useremail: ",useremail)
+        login_data = SignUp.objects.get(useremail=useremail)
+        if login_data.password == password:
+            request.session['signup_id'] = login_data.id
+            print("session_id",request.session['signup_id'])
+            return render(request,'trackapp/index.html',{})
+        else:
+            return render(request, 'trackapp/login.html', context)
+
+    return render(request, 'trackapp/login.html', context)
+
+
+def logout(request):
+    try:
+        del request.session['signup_id']
+        print("request.session['signup_id']",request.session['signup_id'])
+    except KeyError:
+        pass
+    print("request.session['signup_id']")
+    return HttpResponse("You're logged out.")
+
 def home(request):
-    return render(request,'trackapp/home.html',{})
->>>>>>> c7b03c2e55db2d59f2f7a9cf491e26ced1caf330
+    return render(request,'trackapp/home.html', {})
