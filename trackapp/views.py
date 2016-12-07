@@ -1,12 +1,16 @@
 
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, HttpResponse
 
 
 #import SignUp modele here
 from trackapp.models import SignUp
 
+
+from trackapp.forms import SignUpForm
+from trackapp.forms import LoginForm
 #import serializers model here
 from trackapp.serializers import SignUpSerializer
+from trackapp.serializers import LoginSerializer
 
 from django.http import Http404
 from rest_framework.views import APIView
@@ -18,10 +22,14 @@ from rest_framework import status
 from datetime import datetime,timedelta
 from django.utils import timezone
 
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
 
-#  class based views for SignUp model model--------------------------------------------
 
-class SignUpList(APIView):
+
+#  class based views for AdminSignup which will store in SignUp model---------------------
+
+class AdminSignUpList(APIView):
 
     """
     List all SignUp or created a new SignUp
@@ -33,10 +41,46 @@ class SignUpList(APIView):
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = SignUpSerializer(data=request.data)
+
+        data = request.data
+        if request.data!=None:
+            try:
+                signup = SignUp.objects.filter(useremail=data['useremail'])
+                print(signup)
+                if len(signup)<1:
+                    data['isAdmin'] = True
+                    serializer = SignUpSerializer(data=data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                else:
+                    return HttpResponse("Email ID already Exist")
+
+            except Exception:
+                return HttpResponse("Try with different Email ID")
+
+        return Response( status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminLogin(APIView):
+    """
+    Admin login views
+
+    """
+    def post(self, request, format=None):
+        serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            useremail=request.data.get('useremail', '')
+            password = request.data.get('password', '')
+            login_data = SignUp.objects.get(useremail=useremail)
+            if login_data.password == password:
+                request.session['session_id'] = login_data.id
+                print("session_id", request.session['session_id'])
+                return render(request, 'trackapp/index.html', {})
+            else:
+                return HttpResponse("Useremail or password is incorrect")
+
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -55,9 +99,15 @@ class SignUpDetail(APIView):
         serializer=SignUpSerializer(signup)
         return Response(serializer.data)
 
+    def get(self, request, username, format=None):
+        signup=SignUp.objects.get(username=username)
+        serializer=SignUpSerializer(signup)
+        return Response(serializer.data)
+
     def put(self, request, pk, format=None):
         signup=self.get_object(pk)
         serializer=SignUpSerializer(signup,data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -68,9 +118,56 @@ class SignUpDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
     #print "datetime",timezone.now()
 
+
 #----------------------end --------------------------------------------------------------
 
+#this method render /trackapp/home.html page
 
-# this function for home page
+def signup(request):
+    signupData=SignUpForm(request.POST)
+    context={
+        "signupData":signupData
+    }
+    print("sdkfksdfknfksfksfnsknfkjs")
+    if request.method == 'POST':
+        if signupData.is_valid():
+            instance = signupData.save(commit=False)
+            instance.save()
+        print(signupData)
+        return render(request,'trackapp/signup.html')
+    else:
+        print("page re gggggggggggg")
+        return render(request,'trackapp/signup.html',context)
+
+def login(request):
+    loginData=LoginForm(request.POST)
+    print("jai hind")
+    context = {
+        "loginData": loginData,
+    }
+    if request.method == 'POST':
+        useremail = request.POST.get('useremail', '')
+        password = request.POST.get('password', '')
+        print("useremail: ",useremail)
+        login_data = SignUp.objects.get(useremail=useremail)
+        if login_data.password == password:
+            request.session['signup_id'] = login_data.id
+            print("session_id",request.session['signup_id'])
+            return render(request,'trackapp/index.html',{})
+        else:
+            return render(request, 'trackapp/login.html', context)
+
+    return render(request, 'trackapp/login.html', context)
+
+
+def logout(request):
+    try:
+        del request.session['signup_id']
+        print("request.session['signup_id']",request.session['signup_id'])
+    except KeyError:
+        pass
+    print("request.session['signup_id']")
+    return HttpResponse("You're logged out.")
+
 def home(request):
-    return render(request,'trackapp/home.html',{})
+    return render(request,'trackapp/home.html', {})
